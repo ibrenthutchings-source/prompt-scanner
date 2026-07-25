@@ -1,0 +1,90 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.badge span[aria-hidden] {
+  font-size: 10px;
+}
+
+.sev-none {
+  color: var(--status-good-text);
+  background: color-mix(in srgb, var(--status-good) 14%, transparent);
+}
+.sev-low {
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+.sev-medium {
+  color: #8a5a00;
+  background: color-mix(in srgb, var(--status-warning) 22%, transparent);
+}
+:root[data-theme="dark"] .sev-medium {
+  color: var(--status-warning);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .sev-medium {
+    color: var(--status-warning);
+  }
+}
+.sev-high {
+  color: #9a3f1f;
+  background: color-mix(in srgb, var(--status-serious) 20%, transparent);
+}
+:root[data-theme="dark"] .sev-high {
+  color: var(--status-serious);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .sev-high {
+    color: var(--status-serious);
+  }
+}
+.sev-critical {
+  color: #ffffff;
+  background: var(--status-critical);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.chip-pii {
+  border-color: color-mix(in srgb, var(--series-1) 45%, transparent);
+  color: var(--series-1);
+}
+.chip-phi {
+  border-color: color-mix(in srgb, var(--series-2) 45%, transparent);
+  color: var(--series-2);
+}
+.chip-pci {
+  border-color: color-mix(in srgb, var(--series-3) 45%, transparent);
+  color: var(--series-3);
+}
+.chip-secret {
+  border-color: color-mix(in srgb, var(--series-4) 45%, transparent);
+  color: var(--series-4);
+}
+.chip-ip {
+  border-color: color-mix(in srgb, var(--series-5) 55%, transparent);
+  color: var(--series-5);
+}
+.chip-regulated {
+  border-color: color-mix(in srgb, var(--series-6) 45%, transparent);
+  color: var(--series-6);
+}
+.chip-other {
+  border-color: color-mix(in srgb, var(--series-7) 45%, transparent);
+  color: var(--series-7);
+}

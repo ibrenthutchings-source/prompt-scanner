@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Prompt Gateway Scanner — Settings</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        max-width: 480px;
+        margin: 32px auto;
+        color: #0b0b0b;
+        background: #f9f9f7;
+      }
+      h1 {
+        font-size: 16px;
+      }
+      .field {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #52514e;
+        margin-bottom: 4px;
+      }
+      input[type="text"],
+      input[type="url"] {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid rgba(11, 11, 11, 0.15);
+        border-radius: 6px;
+        font-size: 13px;
+        box-sizing: border-box;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .hint {
+        font-size: 11.5px;
+        color: #898781;
+        margin-top: 4px;
+      }
+      button {
+        background: #0b0b0b;
+        color: #fff;
+        border: none;
+        padding: 9px 18px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #status {
+        margin-left: 10px;
+        font-size: 12.5px;
+        color: #0ca30c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Prompt Gateway Scanner</h1>
+
+    <div class="field">
+      <label class="row">
+        <input type="checkbox" id="enabled" />
+        Scan prompts before they are sent
+      </label>
+    </div>
+
+    <div class="field">
+      <label for="gatewayUrl">Gateway URL</label>
+      <input type="url" id="gatewayUrl" placeholder="http://127.0.0.1:8000" />
+      <div class="hint">Base URL of your organization's Prompt Gateway (no trailing slash).</div>
+    </div>
+
+    <div class="field">
+      <label for="actor">Your identifier (optional)</label>
+      <input type="text" id="actor" placeholder="jane.doe" />
+      <div class="hint">Shown to security analysts on the dashboard. Leave blank to stay pseudonymous.</div>
+    </div>
+
+    <div class="field">
+      <label for="department">Department (optional)</label>
+      <input type="text" id="department" placeholder="engineering" />
+    </div>
+
+    <div class="field">
+      <label class="row">
+        <input type="checkbox" id="waitForCouncil" />
+        Wait for full AI council review before sending
+      </label>
+      <div class="hint">
+        Slower (adds a few seconds), but catches risks the fast detectors can't —
+        recommended for anyone routinely handling sensitive data.
+      </div>
+    </div>
+
+    <button id="save">Save</button>
+    <span id="status"></span>
+
+    <script src="options.js"></script>
+  </body>
+</html>

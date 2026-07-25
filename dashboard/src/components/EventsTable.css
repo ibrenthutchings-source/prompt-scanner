@@ -1,0 +1,120 @@
+.events-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.events-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 780px;
+}
+.events-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+}
+.events-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--gridline);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.events-table tbody tr {
+  cursor: pointer;
+  transition: background-color 1.2s ease;
+}
+.events-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.events-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.row-flash {
+  background: color-mix(in srgb, var(--status-warning) 16%, transparent);
+}
+.row-open-critical {
+  border-left: 3px solid var(--status-critical);
+}
+.row-escalated {
+  background: color-mix(in srgb, var(--status-critical) 6%, transparent);
+}
+
+.cell-time {
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.cell-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.cell-reason {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.muted {
+  color: var(--text-muted);
+}
+.dept {
+  color: var(--text-muted);
+}
+.escalated-tag {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--status-critical);
+  border: 1px solid var(--status-critical);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.council-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+.council-completed {
+  color: var(--status-good-text);
+  border-color: color-mix(in srgb, var(--status-good) 40%, transparent);
+}
+.council-partial {
+  color: #8a5a00;
+  border-color: color-mix(in srgb, var(--status-warning) 50%, transparent);
+}
+.council-failed,
+.council-unavailable {
+  color: var(--status-critical);
+  border-color: color-mix(in srgb, var(--status-critical) 40%, transparent);
+}
+.council-pending {
+  color: var(--text-secondary);
+}
+
+.events-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}

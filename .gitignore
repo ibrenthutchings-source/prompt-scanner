@@ -1,0 +1,26 @@
+# Python
+gateway/.venv/
+gateway/__pycache__/
+**/__pycache__/
+*.pyc
+gateway/scanner.db
+gateway/*.db
+.pytest_cache/
+
+# Node / dashboard
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# Env / secrets
+.env
+.env.local
+*.local
+
+# Editors / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Extension packaging output
+extension/*.zip

@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt Gateway Scanner",
+  "version": "0.1.0",
+  "description": "Scans prompts for PII/PHI/secrets/IP/regulatory risk before they leave the browser to ChatGPT, Claude, or Gemini.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Prompt Gateway Scanner"
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      "js": ["lib/overlay.js", "lib/scan.js", "content/common.js", "content/chatgpt.js"],
+      "css": ["lib/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["lib/overlay.js", "lib/scan.js", "content/common.js", "content/claude.js"],
+      "css": ["lib/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["lib/overlay.js", "lib/scan.js", "content/common.js", "content/gemini.js"],
+      "css": ["lib/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

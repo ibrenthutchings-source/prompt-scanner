@@ -1,0 +1,223 @@
+# Enforcement policy for the prompt gateway.
+#
+# Evaluation order:
+#   1. exemptions   — can only soften. Matched exemptions cap the action.
+#   2. rules        — first match wins. Order is significant.
+#   3. severity_actions — the fallback ladder when no rule matches.
+#
+# Reload without a restart: POST /v1/admin/policy/reload
+version: 3
+
+# Baseline ladder. Rules below override this for specific situations.
+severity_actions:
+  critical: block
+  high: redact
+  medium: warn
+  low: allow
+  none: allow
+
+# Shown to the user when a prompt is stopped. Keep it actionable: people route
+# around controls they do not understand.
+messages:
+  block: >-
+    This prompt was blocked before it reached {provider}. It contains
+    {summary}. If this is a false positive or you have an approved business
+    need, request an exception from the security team quoting event {event_id}.
+  redact: >-
+    Sensitive values in this prompt were masked before it was sent to
+    {provider}: {summary}. The rest of your request went through unchanged.
+  warn: >-
+    Heads up: this prompt contains {summary}. It was allowed, but has been
+    logged for review as event {event_id}.
+  allow: ""
+
+rules:
+  # --- Never leaves the perimeter, regardless of who is asking --------------
+  - name: live-credentials
+    description: >-
+      A credential in a prompt is a credential in a vendor's logs. There is no
+      business case that survives this, so it is not exemptable.
+    when:
+      categories: [secret]
+      min_severity: high
+    action: block
+    exemptable: false
+    message: >-
+      This prompt contains what appears to be a live credential ({detectors}).
+      It was blocked and not transmitted. Treat the credential as compromised
+      and rotate it — pasting it here means it has already been in a clipboard
+      and a browser process. Event {event_id}.
+
+  - name: ai-act-prohibited-practice
+    description: EU AI Act Art. 5 practices are unlawful, not merely risky.
+    when:
+      detectors:
+        - ai_act_social_scoring
+        - ai_act_emotion_recognition
+        - ai_act_biometric_categorisation
+        - ai_act_predictive_policing
+    action: block
+    exemptable: false
+    message: >-
+      This request describes a practice prohibited under Article 5 of the EU AI
+      Act ({detectors}). It was blocked. Legal and the AI governance function
+      must sign off before any work proceeds. Event {event_id}.
+
+  - name: payment-card-data
+    when:
+      categories: [pci]
+      min_severity: high
+    action: block
+    exemptable: false
+    message: >-
+      Cardholder data cannot be sent to an external model under PCI-DSS. The
+      prompt was blocked. Use the tokenised value from the payments service
+      instead. Event {event_id}.
+
+  # --- Identified health data ---------------------------------------------
+  - name: identified-phi
+    when:
+      categories: [phi]
+      min_severity: high
+    action: block
+    message: >-
+      This prompt contains protected health information linked to an
+      identifiable person ({detectors}). {provider} is not a Business
+      Associate, so transmitting it would itself be a disclosure. De-identify
+      to Safe Harbor standard and retry. Event {event_id}.
+
+  # --- Bulk personal data --------------------------------------------------
+  - name: bulk-personal-data
+    description: Volume turns an incident into a notifiable breach.
+    when:
+      detector_prefixes: [bulk_]
+      min_severity: high
+    action: block
+    message: >-
+      This looks like a bulk export of personal data ({detectors}). Sending it
+      to {provider} would likely be a notifiable breach under GDPR Art. 33.
+      Blocked. Event {event_id}.
+
+  # --- Special-category and high-risk uses ---------------------------------
+  - name: gdpr-special-category
+    when:
+      detectors: [gdpr_special_category, gdpr_health_data]
+      min_severity: high
+    action: redact
+    message: >-
+      Special-category data under GDPR Art. 9 was masked before this prompt was
+      sent ({detectors}). Processing it requires an Art. 9(2) condition that a
+      general-purpose model vendor does not provide. Event {event_id}.
+
+  - name: ai-act-high-risk
+    when:
+      detectors:
+        - ai_act_high_risk_employment
+        - ai_act_high_risk_credit
+        - gdpr_automated_decision
+    action: warn
+    message: >-
+      This describes a high-risk AI use under the EU AI Act ({detectors}).
+      Allowed, but the system you are building carries Art. 8-15 obligations:
+      risk management, data governance, logging, and human oversight. This has
+      been logged for the AI governance register as event {event_id}.
+
+  # --- Intellectual property ----------------------------------------------
+  - name: marked-confidential-material
+    when:
+      categories: [ip]
+      min_severity: critical
+    action: block
+    message: >-
+      This prompt contains material carrying a confidentiality marking
+      ({detectors}). It was blocked. Use the internally-hosted model for work
+      on this content. Event {event_id}.
+
+  - name: proprietary-material
+    when:
+      categories: [ip]
+      min_severity: high
+    action: warn
+    message: >-
+      This prompt contains proprietary business content ({detectors}). It was
+      allowed, but consider whether the internal model is the right destination.
+      Logged as event {event_id}.
+
+  # --- Attachments the gateway could not look inside ------------------------
+  - name: unscanned-attachment
+    description: >-
+      An image, PDF, or file reference that neither the detectors nor the
+      council could inspect. Content-blind, so warn rather than block —
+      but never let it pass silently.
+    when:
+      detectors: [attachment_unscanned]
+      min_severity: medium
+    action: warn
+    message: >-
+      This prompt includes an attachment ({detectors}) whose content could not
+      be inspected before it left the perimeter — the council is disabled, the
+      attachment type is unsupported, or it references a file the gateway
+      cannot resolve. Allowed, but logged as an unknown-content disclosure.
+      Event {event_id}.
+
+  # --- Ordinary personal data ---------------------------------------------
+  - name: personal-data-redactable
+    description: >-
+      A support ticket with one customer's email has a legitimate purpose. Mask
+      the identifier and let the work continue.
+    when:
+      categories: [pii]
+      min_severity: high
+    action: redact
+    message: >-
+      Personal identifiers in this prompt were masked before it was sent
+      ({detectors}). Event {event_id}.
+
+  # --- Council escalation --------------------------------------------------
+  - name: council-block
+    description: >-
+      The council saw something the detectors could not — obfuscated payloads,
+      novel regulated uses, context-dependent IP.
+    when:
+      council_action: block
+      min_council_confidence: 0.7
+    action: block
+    message: >-
+      The AI review council assessed this prompt as a critical disclosure risk.
+      {council_summary} Event {event_id}.
+
+  - name: council-redact
+    when:
+      council_action: redact
+      min_council_confidence: 0.6
+    action: redact
+    message: >-
+      The AI review council flagged sensitive content in this prompt.
+      {council_summary} Event {event_id}.
+
+# Exemptions can only soften an action, and never apply to rules marked
+# exemptable: false. `max_action` is the strongest action still permitted.
+exemptions:
+  - name: security-research
+    description: >-
+      The security team analyses malicious and sensitive samples as their job.
+      Blocking them means they stop using the gateway.
+    when:
+      departments: [security, secops, appsec]
+    max_action: warn
+    applies_to_categories: [ip, regulated]
+
+  - name: legal-privileged-review
+    when:
+      departments: [legal]
+    max_action: redact
+    applies_to_categories: [ip]
+
+  - name: internal-model-destination
+    description: >-
+      Self-hosted destinations stay inside the perimeter, so disclosure risk is
+      materially lower. Everything is still recorded.
+    when:
+      providers: [internal, self-hosted, vllm, ollama]
+    max_action: warn
+    applies_to_categories: [ip, pii, regulated]

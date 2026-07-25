@@ -1,0 +1,9 @@
+/* Loaded into the page but only ever applied inside our shadow root's host
+   element, so it can't leak into or clash with the host site's styles. */
+.pg-host {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  inset: auto 20px 20px auto;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}

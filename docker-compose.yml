@@ -1,0 +1,59 @@
+version: "3.9"
+
+# Local/staging stack. For production, terminate TLS in front of `dashboard`
+# and `gateway`, point real LLM clients' base_url at the gateway service, and
+# swap SCANNER_API_KEY / postgres credentials for secrets-managed values.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: prompt_scanner
+      POSTGRES_USER: scanner
+      POSTGRES_PASSWORD: scanner
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scanner"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  gateway:
+    build: ./gateway
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SCANNER_DATABASE_URL: postgresql+asyncpg://scanner:scanner@postgres:5432/prompt_scanner
+      # Credentials for the council resolve via the standard Anthropic SDK
+      # chain (ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN / `ant auth login`
+      # profile) — pass ANTHROPIC_API_KEY through from the host environment.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SCANNER_COUNCIL_ENABLED: ${SCANNER_COUNCIL_ENABLED:-true}
+      SCANNER_SHADOW_MODE: ${SCANNER_SHADOW_MODE:-false}
+      SCANNER_REQUIRE_API_KEY: ${SCANNER_REQUIRE_API_KEY:-false}
+      SCANNER_API_KEY: ${SCANNER_API_KEY:-dev-scanner-key}
+      SCANNER_WEBHOOK_URL: ${SCANNER_WEBHOOK_URL:-}
+      SCANNER_DASHBOARD_ORIGINS: '["http://localhost:8080"]'
+    volumes:
+      - gateway_data:/data
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dashboard:
+    build: ./dashboard
+    depends_on:
+      - gateway
+    ports:
+      - "8080:80"
+
+volumes:
+  pg_data:
+  gateway_data:
