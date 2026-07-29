@@ -9,6 +9,8 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 
+from app.authn import basic_auth_ok
+from app.config import get_settings
 from app.db import session_scope
 from app.events import bus
 from app.models import ScanEvent
@@ -22,6 +24,12 @@ _HEARTBEAT_S = 20.0
 
 @router.websocket("/v1/live")
 async def live_feed(websocket: WebSocket) -> None:
+    # Browsers attach cached Basic Auth credentials to same-origin WebSocket
+    # handshakes automatically once the user has authenticated on the REST
+    # API, so this needs no client-side change — just the same check.
+    if not basic_auth_ok(websocket.headers.get("authorization"), get_settings()):
+        await websocket.close(code=4401)
+        return
     await websocket.accept()
 
     # Backfill so a freshly opened tab is not empty until the next event.

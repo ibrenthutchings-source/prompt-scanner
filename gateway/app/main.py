@@ -11,6 +11,7 @@ from app.api.admin import router as admin_router
 from app.api.dashboard import router as dashboard_router
 from app.api.live import router as live_router
 from app.api.scan import router as scan_router
+from app.authn import basic_auth_ok
 from app.config import get_settings
 from app.council import get_council
 from app.db import init_db
@@ -68,6 +69,24 @@ async def api_key_gate(request: Request, call_next):
     if exempt or request.headers.get("x-api-key") == settings.api_key:
         return await call_next(request)
     return JSONResponse(status_code=401, content={"detail": "missing or invalid X-API-Key"})
+
+
+@app.middleware("http")
+async def dashboard_auth_gate(request: Request, call_next):
+    """HTTP Basic Auth in front of the CISO dashboard's API + admin routes.
+
+    Only active once SCANNER_DASHBOARD_PASSWORD is set — see app/authn.py.
+    """
+    settings = get_settings()
+    path = request.url.path
+    protected = path.startswith("/v1/dashboard") or path.startswith("/v1/admin")
+    if not protected or basic_auth_ok(request.headers.get("authorization"), settings):
+        return await call_next(request)
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "authentication required"},
+        headers={"WWW-Authenticate": 'Basic realm="Prompt Scanner Dashboard"'},
+    )
 
 
 app.include_router(scan_router)

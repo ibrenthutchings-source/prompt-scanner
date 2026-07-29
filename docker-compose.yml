@@ -37,6 +37,8 @@ services:
       SCANNER_API_KEY: ${SCANNER_API_KEY:-dev-scanner-key}
       SCANNER_WEBHOOK_URL: ${SCANNER_WEBHOOK_URL:-}
       SCANNER_DASHBOARD_ORIGINS: '["http://localhost:8080"]'
+      SCANNER_DASHBOARD_USERNAME: ${SCANNER_DASHBOARD_USERNAME:-admin}
+      SCANNER_DASHBOARD_PASSWORD: ${SCANNER_DASHBOARD_PASSWORD:-}
     volumes:
       - gateway_data:/data
     ports:

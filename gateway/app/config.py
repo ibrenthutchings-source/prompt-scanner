@@ -8,6 +8,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +21,18 @@ class Settings(BaseSettings):
 
     # --- storage -----------------------------------------------------------
     database_url: str = f"sqlite+aiosqlite:///{REPO_ROOT / 'scanner.db'}"
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_async_driver(cls, v: str) -> str:
+        # Managed Postgres (Railway, Heroku, ...) hands out a plain
+        # postgres[ql]:// URL — SQLAlchemy's async engine needs the asyncpg
+        # driver named explicitly.
+        if v.startswith("postgres://"):
+            return "postgresql+asyncpg://" + v[len("postgres://"):]
+        if v.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + v[len("postgresql://"):]
+        return v
 
     # --- upstream providers ------------------------------------------------
     anthropic_base_url: str = "https://api.anthropic.com"
@@ -56,6 +69,13 @@ class Settings(BaseSettings):
     # Shared secret the browser extension and dashboard present. Rotate in prod.
     api_key: str = "dev-scanner-key"
     require_api_key: bool = False
+
+    # --- dashboard auth ------------------------------------------------------
+    # HTTP Basic Auth in front of the CISO dashboard's API, live feed, and
+    # admin routes. An unset password disables it — fine for local dev, but
+    # set both before deploying anywhere reachable off your own machine.
+    dashboard_username: str = "admin"
+    dashboard_password: str | None = None
 
     # --- alerting ----------------------------------------------------------
     webhook_url: str | None = None

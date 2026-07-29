@@ -107,6 +107,16 @@ without a restart via `POST /v1/admin/policy/reload`. Nothing about the
 enforcement logic is hardcoded in Python; that file is the thing a security
 team actually edits.
 
+## Dashboard auth
+
+The dashboard shows raw flagged prompt content (PII/PHI/secrets included), so
+`/v1/dashboard/*`, `/v1/admin/*`, and the `/v1/live` WebSocket sit behind HTTP
+Basic Auth (`gateway/app/authn.py`). It's off by default for local dev — set
+`SCANNER_DASHBOARD_USERNAME` / `SCANNER_DASHBOARD_PASSWORD` to turn it on
+(both are required on any deployment reachable off your own machine; the
+proxy routes `/anthropic` and `/openai` are unaffected, they carry the
+provider's own credentials).
+
 ## What gets scanned
 
 - **Text** — every request/response content block across Anthropic Messages,
